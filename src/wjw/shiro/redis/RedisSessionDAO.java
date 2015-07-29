@@ -108,9 +108,7 @@ public class RedisSessionDAO extends CachingSessionDAO {
   public void setRedisManager(RedisManager redisManager) {
     this.redisManager = redisManager;
 
-    /**
-     * ³õÊ¼»¯redisManager
-     */
+    // initialize the Redis manager instance
     this.redisManager.init();
   }
 

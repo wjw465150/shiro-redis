@@ -65,28 +65,11 @@ public class RedisCache<K, V> implements Cache<K, V> {
    * @param prefix
    *          The Redis key prefix
    */
-  public RedisCache(RedisManager cache,
-      String prefix) {
-
+  public RedisCache(RedisManager cache, String prefix) {
     this(cache);
 
     // set the prefix
     this.keyPrefix = prefix;
-  }
-
-  /**
-   * 获得byte[]型的key
-   * 
-   * @param key
-   * @return
-   */
-  private byte[] getByteKey(K key) {
-    if (key instanceof String) {
-      String preKey = this.keyPrefix + key;
-      return preKey.getBytes();
-    } else {
-      return SerializeUtils.serialize(key);
-    }
   }
 
   @Override
@@ -132,7 +115,7 @@ public class RedisCache<K, V> implements Cache<K, V> {
 
   @Override
   public void clear() throws CacheException {
-    logger.debug("从Redis中删除所有元素");
+    logger.debug("clear() from redis");
     try {
       cache.flushDB();
     } catch (Throwable t) {
@@ -143,8 +126,7 @@ public class RedisCache<K, V> implements Cache<K, V> {
   @Override
   public int size() {
     try {
-      Long longSize = new Long(cache.dbSize());
-      return longSize.intValue();
+      return (int) cache.dbSize();
     } catch (Throwable t) {
       throw new CacheException(t);
     }
@@ -188,6 +170,21 @@ public class RedisCache<K, V> implements Cache<K, V> {
       }
     } catch (Throwable t) {
       throw new CacheException(t);
+    }
+  }
+
+  /**
+   * 获得byte[]型的key
+   * 
+   * @param key
+   * @return
+   */
+  private byte[] getByteKey(K key) {
+    if (key instanceof String) {
+      String preKey = this.keyPrefix + key;
+      return preKey.getBytes();
+    } else {
+      return SerializeUtils.serialize(key);
     }
   }
 

@@ -30,8 +30,7 @@ public class TestRedisCacheManager extends TestCase {
     log.info("My First Apache Shiro Application");
 
     // create a factory instance
-    Factory<SecurityManager> factory = new IniSecurityManagerFactory(
-        "classpath:shiro.ini");
+    Factory<SecurityManager> factory = new IniSecurityManagerFactory("classpath:shiro.ini");
 
     // get a new security manager instance
     SecurityManager securityManager = factory.getInstance();
@@ -64,12 +63,12 @@ public class TestRedisCacheManager extends TestCase {
     subject.login(token);
 
     log.info("User successfuly logged in");
-    
-    Thread.sleep(10*1000);
+
+    Thread.sleep(10 * 1000);
     subject.hasRole("goodguy");
-    
-    Thread.sleep(10*1000);
-    
+
+    Thread.sleep(10 * 1000);
+
     subject.logout();
   }
 

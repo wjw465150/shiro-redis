@@ -230,15 +230,6 @@ public class RedisManager {
     return "RedisManager{" + ",expire=" + expire + ",serverlist=" + serverlist + ",minConn=" + minConn + ",maxConn=" + maxConn + ",socketTO=" + socketTO + '}';
   }
 
-//  byte[] serialize(Object obj) throws IOException {
-//    return KryoSerializer.write(obj);
-//  }
-//
-//  Object deserialize(byte[] bb) throws IOException, ClassNotFoundException {
-//    return KryoSerializer.read(bb);
-//  }
-
-  //TODO@Redis·½·¨
   /**
    * get value from redis
    * 
@@ -283,41 +274,7 @@ public class RedisManager {
    * @return
    */
   public byte[] set(byte[] key, byte[] value) {
-    if (_pool != null) {
-      Jedis jedis = null;
-      try {
-        jedis = _pool.getResource();
-        jedis.set(key, value);
-        if (this.getExpire() != 0) {
-          jedis.expire(key, expire);
-        }
-        return value;
-      } finally {
-        if (jedis != null) {
-          try {
-            _pool.returnResource(jedis);
-          } catch (Throwable thex) {
-          }
-        }
-      }
-    } else {
-      ShardedJedis jedis = null;
-      try {
-        jedis = _shardedPool.getResource();
-        jedis.set(key, value);
-        if (this.getExpire() != 0) {
-          jedis.expire(key, expire);
-        }
-        return value;
-      } finally {
-        if (jedis != null) {
-          try {
-            _shardedPool.returnResource(jedis);
-          } catch (Throwable thex) {
-          }
-        }
-      }
-    }
+    return this.set(key, value, expire);
   }
 
   /**
@@ -333,9 +290,10 @@ public class RedisManager {
       Jedis jedis = null;
       try {
         jedis = _pool.getResource();
-        jedis.set(key, value);
-        if (this.getExpire() != 0) {
-          jedis.expire(key, expire);
+        if (this.expire == 0) {
+          jedis.set(key, value);
+        } else {
+          jedis.setex(key, expire, value);
         }
         return value;
       } finally {
@@ -350,9 +308,10 @@ public class RedisManager {
       ShardedJedis jedis = null;
       try {
         jedis = _shardedPool.getResource();
-        jedis.set(key, value);
-        if (this.getExpire() != 0) {
-          jedis.expire(key, expire);
+        if (this.expire == 0) {
+          jedis.set(key, value);
+        } else {
+          jedis.setex(key, expire, value);
         }
         return value;
       } finally {
@@ -441,7 +400,7 @@ public class RedisManager {
   /**
    * size
    */
-  public Long dbSize() {
+  public long dbSize() {
     if (_pool != null) {
       Jedis jedis = null;
       try {
@@ -465,7 +424,7 @@ public class RedisManager {
           dbSize = dbSize + item.dbSize();
         }
 
-        return Long.valueOf(dbSize);
+        return dbSize;
       } finally {
         if (jedis != null) {
           try {
