@@ -12,11 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RedisSessionDAO extends CachingSessionDAO {
-
   private static Logger logger = LoggerFactory.getLogger(RedisSessionDAO.class);
-  /**
-   * shiro-redis的session对象前缀
-   */
+  
   private RedisManager redisManager;
 
   /**

@@ -27,7 +27,7 @@ public class TestRedisCacheManager extends TestCase {
   @Before
   public void setUp() throws Exception {
 
-    log.info("My First Apache Shiro Application");
+    log.info("TestRedisCacheManager");
 
     // create a factory instance
     Factory<SecurityManager> factory = new IniSecurityManagerFactory("classpath:shiro.ini");
