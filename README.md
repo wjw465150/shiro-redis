@@ -1,5 +1,5 @@
 # shiro-redis
-A Apache Shiro session cache and realm for Redis, it will allow your application to save your users session in Redis!
+A Apache Shiro `session`,`cache`,`realm` for Redis, it will allow your application to save your users `cache`,`session`,`realm` in Redis!
 
 How to configure ?
 ===========
@@ -44,81 +44,110 @@ cacheManager.redisManager = $redisManager
 cacheManager.keyPrefix = shiro_cache:
 
 securityManager.cacheManager = $cacheManager
+
+#============redisRealm===========
+redisRealm = wjw.shiro.redis.RedisRealm
+redisRealm.redisManager = $redisManager
+redisRealm.permissionsLookupEnabled = true
+securityManager.realms=$redisRealm
 ```
 
 spring-shiro.xml:
 ```xml
-<!-- shiro filter -->
-<bean id="ShiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
-	<property name="securityManager" ref="securityManager"/>
-	
-	<!--
-	<property name="loginUrl" value="/login.jsp"/>
-	<property name="successUrl" value="/home.jsp"/>  
-	<property name="unauthorizedUrl" value="/unauthorized.jsp"/>
-	-->
-	<!-- The 'filters' property is not necessary since any declared javax.servlet.Filter bean  -->
-	<!-- defined will be automatically acquired and available via its beanName in chain        -->
-	<!-- definitions, but you can perform instance overrides or name aliases here if you like: -->
-	<!-- <property name="filters">
-		<util:map>
-			<entry key="anAlias" value-ref="someFilter"/>
-		</util:map>
-	</property> -->
-	<property name="filterChainDefinitions">
-		<value>
-			/login.jsp = anon
-			/user/** = anon
-			/register/** = anon
-			/unauthorized.jsp = anon
-			/css/** = anon
-			/js/** = anon
-			
-			/** = authc
-		</value>
-	</property>
-</bean>
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:util="http://www.springframework.org/schema/util" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
-<!-- shiro securityManager -->
-<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+  <!-- 基于Form表单的身份验证过滤器 -->
+  <bean id="formAuthenticationFilter"		class="org.apache.shiro.web.filter.authc.FormAuthenticationFilter">
+  	<property name="usernameParam" value="userText" />
+  	<property name="passwordParam" value="passText" />
+  	<property name="loginUrl" value="/login.do" />      <!-- 表单要提交到的URL地址  -->
+  	<property name="successUrl" value="/success.jsp" />
+  </bean>
+  
+  <!-- shiro的Web主过滤器,beanId 和web.xml中配置的filter name需要保持一致 -->
+  <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+  	<property name="securityManager" ref="securityManager" />
+  	
+  	<property name="loginUrl" value="/login.jsp" />     <!-- 要填写登录信息的URL地址  -->
+  	<property name="unauthorizedUrl" value="/unauthorized.jsp" />
+  	<property name="filters">
+  		<util:map>
+  			<entry key="authc" value-ref="formAuthenticationFilter" />
+  		</util:map>
+  	</property>
+  	<property name="filterChainDefinitions">
+  		<value>
+  			/js/** = anon
+  			/index.htm*= anon
+  			/unauthorized.jsp*= anon
+  			/login.jsp* = anon
+  			/login.do = authc
+  			/logout = logout
+  			/** = user
+  		</value>
+  	</property>
+  </bean>
+  
+  <!-- shiro securityManager -->
+  <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+    <!-- Single realm app.  If you have multiple realms, use the 'realms' property instead. -->
+    
+    <!-- sessionManager -->
+    <property name="sessionManager" ref="sessionManager" />
+    
+    <!-- cacheManager -->
+    <property name="cacheManager" ref="cacheManager" />
+    
+    <!-- realm -->
+    <property name="realm" ref="redisRealm" />
+    
+    <!-- By default the servlet container sessions will be used.  Uncomment this line
+       to use shiro's native sessions (see the JavaDoc for more): -->
+    <!-- <property name="sessionMode" value="native"/> -->
+  </bean>
+  
+  <!-- 相当于调用SecurityUtils.setSecurityManager(securityManager) -->
+  <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+    <property name="staticMethod" value="org.apache.shiro.SecurityUtils.setSecurityManager" />
+    <property name="arguments" ref="securityManager" />
+  </bean>
 
-	<!-- Single realm app.  If you have multiple realms, use the 'realms' property instead. -->
-	
-	<!-- sessionManager -->
-	<property name="sessionManager" ref="sessionManager" />
-	
-	<!-- cacheManager -->
-	<property name="cacheManager" ref="cacheManager" />
-	
-	<!-- By default the servlet container sessions will be used.  Uncomment this line
-		 to use shiro's native sessions (see the JavaDoc for more): -->
-	<!-- <property name="sessionMode" value="native"/> -->
-</bean>
-<bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>	
-
-<!-- shiro redisManager -->
-<bean id="redisManager" class="wjw.shiro.redis.RedisManager">
-	<property name="serverlist" value="${ip1}:${port1},${ip2}:${port2}"/>
-	<property name="minConn" value="5"/>
-	<property name="maxConn" value="5"/>
-	<property name="expire" value="1800"/>
-	<property name="socketTO" value="6000"/>
-</bean>
-
-<!-- redisSessionDAO -->
-<bean id="redisSessionDAO" class="wjw.shiro.redis.RedisSessionDAO">
-	<property name="redisManager" ref="redisManager" />
-</bean>
-
-<!-- sessionManager -->
-<bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">
-	<property name="sessionDAO" ref="redisSessionDAO" />
-</bean>
-
-<!-- cacheManager -->
-<bean id="cacheManager" class="wjw.shiro.redis.RedisCacheManager">
-	<property name="redisManager" ref="redisManager" />
-</bean>
+  <!-- Shiro生命周期处理器 -->
+  <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>  
+  
+  <!-- shiro redisManager -->
+  <bean id="redisManager" class="wjw.shiro.redis.RedisManager">
+    <property name="serverlist" value="${ip1}:${port1},${ip2}:${port2}"/>
+    <property name="minConn" value="5"/>
+    <property name="maxConn" value="100"/>
+    <property name="expire" value="1800"/>
+    <property name="socketTO" value="6000"/>
+  </bean>
+  
+  <!-- redisSessionDAO -->
+  <bean id="redisSessionDAO" class="wjw.shiro.redis.RedisSessionDAO">
+    <property name="redisManager" ref="redisManager" />
+  </bean>
+  
+  <!-- sessionManager -->
+  <bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">
+    <property name="sessionDAO" ref="redisSessionDAO" />
+  </bean>
+  
+  <!-- cacheManager -->
+  <bean id="cacheManager" class="wjw.shiro.redis.RedisCacheManager">
+    <property name="redisManager" ref="redisManager" />
+  </bean>
+  
+  <!-- redisRealm -->
+  <bean id="redisRealm" class="wjw.shiro.redis.RedisRealm">
+    <property name="redisManager" ref="redisManager" />
+    <property name="permissionsLookupEnabled" value="true" />
+  </bean>
+</beans>
 ```
 
 > Note:  

@@ -32,7 +32,7 @@ public class TestRedisRealmManager extends TestCase {
   @Before
   public void setUp() throws Exception {
     RedisManager redis = new RedisManager();
-    redis.setServerlist("127.0.0.1:6379");
+    redis.setServerlist("192.168.2.113:6379");
     redis.setMinConn(5);
     redis.setMaxConn(10);
     redis.init();
@@ -41,8 +41,9 @@ public class TestRedisRealmManager extends TestCase {
     redisRealm.setRedisManager(redis);
     redisRealm.setPermissionsLookupEnabled(true);
 
-    redis.flushDB();
+    //redis.flushDB();
     //1. 初始化 用户: 存放在hash里,key的模式是:"shiro_realm:users:$username" <br/>
+    redisRealm.addUser("admin", "admin123");
     redisRealm.addUser("root", "123456");
     redisRealm.addUser("guest", "guest123");
 
@@ -50,6 +51,7 @@ public class TestRedisRealmManager extends TestCase {
     redisRealm.addRole("admin", "guest");
 
     //3. 用户拥有的角色:存放在set里,key的模式是:"shiro_realm:user_roles:$username" <br/>
+    redisRealm.addUserOwnedRoles("admin", "admin");
     redisRealm.addUserOwnedRoles("root", "admin", "guest");
     redisRealm.addUserOwnedRoles("guest", new String[] { "guest" });
 
