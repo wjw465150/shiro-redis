@@ -55,6 +55,20 @@ public class RedisRealm extends AuthorizingRealm {
    */
   private String keyPrefix = "shiro_realm:";
 
+  //用户库的key前缀
+  private String users_KeyPrefix = "shiro_realm:users:";
+
+  //角色库的key
+  private String all_roles_Key = "shiro_realm:all_roles";
+
+  //用户拥有的角色库的key前缀
+  private String user_roles_KeyPrefix = "shiro_realm:user_roles:";
+  //角色被那些用户拥有库的key前缀
+  private String role_users_KeyPrefix = "shiro_realm:role_users:";
+
+  //角色对应的权限库的key
+  private String roles_permissions_Key = "shiro_realm:roles_permissions";
+
   /**
    * Returns the Redis session keys prefix.
    * 
@@ -72,6 +86,20 @@ public class RedisRealm extends AuthorizingRealm {
    */
   public void setKeyPrefix(String keyPrefix) {
     this.keyPrefix = keyPrefix;
+
+    //用户库的key前缀
+    users_KeyPrefix = this.keyPrefix + "users:";
+
+    //角色库的key
+    all_roles_Key = this.keyPrefix + "all_roles";
+
+    //用户拥有的角色库的key前缀
+    user_roles_KeyPrefix = this.keyPrefix + "user_roles:";
+    //角色被那些用户拥有库的key前缀
+    role_users_KeyPrefix = this.keyPrefix + "role_users:";
+
+    //角色对应的权限库的key
+    roles_permissions_Key = this.keyPrefix + "roles_permissions";
   }
 
   public RedisManager getRedisManager() {
@@ -137,12 +165,12 @@ public class RedisRealm extends AuthorizingRealm {
     }
     String username = (String) getAvailablePrincipal(principals);
 
-    java.util.Set<String> roles = redisManager.smembers(keyPrefix + "user_roles:" + username);
+    java.util.Set<String> roles = redisManager.smembers(user_roles_KeyPrefix + username);
 
     SimpleAuthorizationInfo info = new SimpleAuthorizationInfo(roles);
 
     if (permissionsLookupEnabled) {
-      java.util.List<java.lang.String> permissionsList = redisManager.hmget("shiro_realm:roles_permissions", roles.toArray(new String[0]));
+      java.util.List<java.lang.String> permissionsList = redisManager.hmget(roles_permissions_Key, roles.toArray(new String[0]));
       Set<String> permissionsSet = new HashSet<String>(permissionsList.size());
       permissionsSet.addAll(permissionsList);
       info.setStringPermissions(permissionsSet);
@@ -156,7 +184,7 @@ public class RedisRealm extends AuthorizingRealm {
    * the database.
    */
   public AuthenticationInfo findPasswordForUsername(String username) {
-    Map<String, String> user = redisManager.hgetAll(keyPrefix + "users:" + username);
+    Map<String, String> user = redisManager.hgetAll(users_KeyPrefix + username);
 
     if (user == null || user.size() == 0) {
       throw new UnknownAccountException("Unkown user " + username);
@@ -168,7 +196,7 @@ public class RedisRealm extends AuthorizingRealm {
   }
 
   /**
-   * 添加用户: 存放在hash里,key的模式是:"shiro_realm:users:$username"
+   * 添加, 用户: 存放在hash里,key的模式是:"shiro_realm:users:$username" <br/>
    * 
    * @param username
    * @param plainTextPassword
@@ -184,29 +212,145 @@ public class RedisRealm extends AuthorizingRealm {
     user.put(F_ALGORITHM, Sha256Hash.ALGORITHM_NAME);
     user.put(F_HASHITERATIONS, String.valueOf(hashIterations));
 
-    if (redisManager.hmset("shiro_realm:users:" + username, user).equalsIgnoreCase("OK")) {
+    if (redisManager.hmset(users_KeyPrefix + username, user).equalsIgnoreCase("OK")) {
       return true;
     } else {
       return false;
     }
   }
 
-  public boolean addRoles(String... roles) {
-    redisManager.sadd("shiro_realm:all_roles", roles);
+  /**
+   * 修改, 用户密码!
+   * 
+   * @param username
+   * @param plainTextPassword
+   * @return
+   */
+  public boolean updateUserPassword(String username, String plainTextPassword) {
+    return addUser(username, plainTextPassword);
+  }
+
+  /**
+   * 删除, 用户,以及用户拥有的角色!
+   * 
+   * @param username
+   */
+  public boolean removeUser(String username) {
+    //1. 先删除, 角色被这个用户拥有的记录
+    java.util.Set<String> rolesSet = redisManager.smembers(user_roles_KeyPrefix + username);
+    for (String role : rolesSet) {
+      redisManager.srem(role_users_KeyPrefix + role, username);
+    }
+
+    //2. 删除, 用户
+    redisManager.del(users_KeyPrefix + username);
+
+    //3. 删除, 用户拥有的角色
+    redisManager.del(user_roles_KeyPrefix + username);
+
     return true;
   }
 
+  /**
+   * 添加, 角色: 存放在set里,key的模式是:"shiro_realm:all_roles" <br/>
+   * 
+   * @param roles
+   * @return
+   */
+  public boolean addRole(String... roles) {
+    redisManager.sadd(all_roles_Key, roles);
+    return true;
+  }
+
+  /**
+   * 删除, 角色,以及角色拥有的权限!
+   * 
+   * @param role
+   */
+  public void removeRole(String role) {
+    //1. 先删除, 角色被那些用户拥有的记录
+    java.util.Set<String> usersSet = redisManager.smembers(role_users_KeyPrefix + role);
+    for (String user : usersSet) {
+      redisManager.srem(user_roles_KeyPrefix + user, role);
+    }
+    //2. 删除, 角色被那些用户拥有库的key 
+    redisManager.del(role_users_KeyPrefix + role);
+
+    //3. 删除, 角色
+    redisManager.srem(all_roles_Key, role);
+
+    //4. 删除, 角色对应的权限
+    this.removeRolePermission(role);
+  }
+
+  /**
+   * 添加, 用户拥有的角色:存放在set里,key的模式是:"shiro_realm:user_roles:$username" <br/>
+   * 
+   * @param username
+   * @param roles
+   * @return
+   */
   public boolean addUserOwnedRoles(String username, String... roles) {
-    redisManager.sadd("shiro_realm:user_roles:" + username, roles);
+    redisManager.sadd(user_roles_KeyPrefix + username, roles);
+    for (String role : roles) {
+      redisManager.sadd(role_users_KeyPrefix + role, username);
+    }
     return true;
   }
 
-  public boolean addRolesPermissions(java.util.Map<String, String> rolesPermissions) {
-    if (redisManager.hmset("shiro_realm:roles_permissions", rolesPermissions).equalsIgnoreCase("OK")) {
-      return true;
-    } else {
-      return false;
-    }
+  /**
+   * 修改, 用户拥有的角色!
+   * 
+   * @param username
+   * @param roles
+   */
+  public void updateUserOwnedRoles(String username, String... roles) {
+    this.removeUserOwnedRoles(username, roles);
+    this.addUserOwnedRoles(username, roles);
+  }
 
+  /**
+   * 删除, 用户拥有的角色!
+   * 
+   * @param username
+   * @param roles
+   */
+  public void removeUserOwnedRoles(String username, String... roles) {
+    redisManager.srem(user_roles_KeyPrefix + username, roles);
+    for (String role : roles) {
+      redisManager.srem(role_users_KeyPrefix + role, username);
+    }
+  }
+
+  /**
+   * 添加, 角色对应的权限:存放在hash里,key的模式是:"shiro_realm:roles_permissions" <br/>
+   * 
+   * @param rolesPermissions
+   * @return
+   */
+  public boolean addRolePermission(String role, String permission) {
+    redisManager.hset(roles_permissions_Key, role, permission);
+    return true;
+  }
+
+  /**
+   * 修改, 角色对应的权限
+   * 
+   * @param role
+   * @param permission
+   * @return
+   */
+  public boolean updateRolePermission(String role, String permission) {
+    redisManager.hset(roles_permissions_Key, role, permission);
+    return true;
+  }
+
+  /**
+   * 删除, 角色对应的权限!
+   * 
+   * @param role
+   */
+  public void removeRolePermission(String role) {
+    redisManager.hdel(roles_permissions_Key, role);
   }
 }

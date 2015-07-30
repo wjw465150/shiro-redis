@@ -629,6 +629,36 @@ public class RedisManager {
     }
   }
 
+  public Long hdel(String hkey, String field) {
+    if (_pool != null) {
+      Jedis jedis = null;
+      try {
+        jedis = _pool.getResource();
+        return jedis.hdel(hkey, field);
+      } finally {
+        if (jedis != null) {
+          try {
+            _pool.returnResource(jedis);
+          } catch (Throwable thex) {
+          }
+        }
+      }
+    } else {
+      ShardedJedis jedis = null;
+      try {
+        jedis = _shardedPool.getResource();
+        return jedis.hdel(hkey, field);
+      } finally {
+        if (jedis != null) {
+          try {
+            _shardedPool.returnResource(jedis);
+          } catch (Throwable thex) {
+          }
+        }
+      }
+    }
+  }
+
   public java.lang.Long sadd(String key, String... members) {
     if (_pool != null) {
       Jedis jedis = null;
@@ -708,6 +738,42 @@ public class RedisManager {
       try {
         jedis = _shardedPool.getResource();
         return jedis.smembers(key);
+      } finally {
+        if (jedis != null) {
+          try {
+            _shardedPool.returnResource(jedis);
+          } catch (Throwable thex) {
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * del
+   * 
+   * @param key
+   */
+  public void del(String key) {
+    if (_pool != null) {
+      Jedis jedis = null;
+      try {
+        jedis = _pool.getResource();
+        jedis.del(key);
+      } finally {
+        if (jedis != null) {
+          try {
+            _pool.returnResource(jedis);
+          } catch (Throwable thex) {
+          }
+        }
+      }
+    } else {
+      ShardedJedis jedis = null;
+      try {
+        jedis = _shardedPool.getResource();
+        Jedis jedisA = jedis.getShard(key);
+        jedisA.del(key);
       } finally {
         if (jedis != null) {
           try {

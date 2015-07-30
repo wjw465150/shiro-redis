@@ -40,24 +40,23 @@ public class TestRedisRealmManager extends TestCase {
     RedisRealm redisRealm = new RedisRealm();
     redisRealm.setRedisManager(redis);
     redisRealm.setPermissionsLookupEnabled(true);
-    
+
+    redis.flushDB();
     //1. 初始化 用户: 存放在hash里,key的模式是:"shiro_realm:users:$username" <br/>
     redisRealm.addUser("root", "123456");
     redisRealm.addUser("guest", "guest123");
 
     //2. 初始化 角色: 存放在set里,key的模式是:"shiro_realm:all_roles"
-    redisRealm.addRoles(new String[] { "admin", "guest" });
+    redisRealm.addRole("admin", "guest");
 
     //3. 用户拥有的角色:存放在set里,key的模式是:"shiro_realm:user_roles:$username" <br/>
-    redisRealm.addUserOwnedRoles("root", new String[] { "admin" });
+    redisRealm.addUserOwnedRoles("root", "admin", "guest");
     redisRealm.addUserOwnedRoles("guest", new String[] { "guest" });
 
     //4.  角色对应的权限:存放在hash里,key的模式是:"shiro_realm:roles_permissions" <br/>
-    java.util.Map<String, String> roles_permissionsMap = new HashMap<String, String>();
-    roles_permissionsMap.put("admin", "*");
-    roles_permissionsMap.put("guest", "*:*:view");
-    redisRealm.addRolesPermissions(roles_permissionsMap);
-    //redis.destroy();
+    redisRealm.addRolePermission("admin", "*");
+    redisRealm.addRolePermission("guest", "*:*:view");
+    redis.destroy();
 
     log.info("TestRedisRealmManager");
 
@@ -93,37 +92,32 @@ public class TestRedisRealmManager extends TestCase {
 
     log.info("User successfuly logged in");
 
-    Thread.sleep(10 * 1000);
-    subject.hasRole("admin");
+    Thread.sleep(2 * 1000);
+    log.info("hasRole:" + subject.hasRole("admin"));
 
-    Thread.sleep(10 * 1000);
-    
-    subject.checkPermission("create");
+    Thread.sleep(2 * 1000);
+
+    log.info("isPermitted:" + subject.isPermitted("*"));
 
     subject.logout();
   }
 
   @Test
-  public void testUser2() throws Exception {
-    /*
-     * login the current subject
-     */
-    Subject subject = SecurityUtils.getSubject();
+  public void testCRUD() throws Exception {
+    RedisManager redis = new RedisManager();
+    redis.setServerlist("127.0.0.1:6379");
+    redis.setMinConn(5);
+    redis.setMaxConn(10);
+    redis.init();
 
-    // use a username/pass token
-    UsernamePasswordToken token = new UsernamePasswordToken("guest", "guest123");
-    token.setRememberMe(true);
-    subject.login(token);
-
-    log.info("User successfuly logged in");
-
-    Thread.sleep(10 * 1000);
-    subject.hasRole("guest");
-
-    Thread.sleep(10 * 1000);
+    RedisRealm redisRealm = new RedisRealm();
+    redisRealm.setRedisManager(redis);
+    redisRealm.setPermissionsLookupEnabled(true);
     
-    subject.checkPermission("*:*:view");
-
-    subject.logout();
-  }
+    
+    redisRealm.removeUser("root");
+    redisRealm.removeRole("admin");
+    
+    redis.destroy();
+ }
 }
