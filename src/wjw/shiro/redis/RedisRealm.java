@@ -243,10 +243,10 @@ public class RedisRealm extends AuthorizingRealm {
     }
 
     //2. 删除, 用户
-    redisManager.del(users_KeyPrefix + username);
+    redisManager.delStr(users_KeyPrefix + username);
 
     //3. 删除, 用户拥有的角色
-    redisManager.del(user_roles_KeyPrefix + username);
+    redisManager.delStr(user_roles_KeyPrefix + username);
 
     return true;
   }
@@ -274,7 +274,7 @@ public class RedisRealm extends AuthorizingRealm {
       redisManager.srem(user_roles_KeyPrefix + user, role);
     }
     //2. 删除, 角色被那些用户拥有库的key 
-    redisManager.del(role_users_KeyPrefix + role);
+    redisManager.delStr(role_users_KeyPrefix + role);
 
     //3. 删除, 角色
     redisManager.srem(all_roles_Key, role);

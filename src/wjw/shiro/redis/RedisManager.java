@@ -265,6 +265,36 @@ public class RedisManager {
     }
   }
 
+  public String getStr(String key) {
+    if (_pool != null) {
+      Jedis jedis = null;
+      try {
+        jedis = _pool.getResource();
+        return jedis.get(key);
+      } finally {
+        if (jedis != null) {
+          try {
+            _pool.returnResource(jedis);
+          } catch (Throwable thex) {
+          }
+        }
+      }
+    } else {
+      ShardedJedis jedis = null;
+      try {
+        jedis = _shardedPool.getResource();
+        return jedis.get(key);
+      } finally {
+        if (jedis != null) {
+          try {
+            _shardedPool.returnResource(jedis);
+          } catch (Throwable thex) {
+          }
+        }
+      }
+    }
+  }
+
   /**
    * set
    * 
@@ -324,6 +354,52 @@ public class RedisManager {
     }
   }
 
+  public String setStr(String key, String value) {
+    return this.setStr(key, value, expire);
+  }
+
+  public String setStr(String key, String value, int expire) {
+    if (_pool != null) {
+      Jedis jedis = null;
+      try {
+        jedis = _pool.getResource();
+        if (this.expire == 0) {
+          jedis.set(key, value);
+        } else {
+          jedis.setex(key, expire, value);
+        }
+
+        return value;
+      } finally {
+        if (jedis != null) {
+          try {
+            _pool.returnResource(jedis);
+          } catch (Throwable thex) {
+          }
+        }
+      }
+    } else {
+      ShardedJedis jedis = null;
+      try {
+        jedis = _shardedPool.getResource();
+        if (this.expire == 0) {
+          jedis.set(key, value);
+        } else {
+          jedis.setex(key, expire, value);
+        }
+
+        return value;
+      } finally {
+        if (jedis != null) {
+          try {
+            _shardedPool.returnResource(jedis);
+          } catch (Throwable thex) {
+          }
+        }
+      }
+    }
+  }
+
   /**
    * del
    * 
@@ -349,42 +425,6 @@ public class RedisManager {
         jedis = _shardedPool.getResource();
         Jedis jedisA = jedis.getShard(key);
         jedisA.del(key);
-      } finally {
-        if (jedis != null) {
-          try {
-            _shardedPool.returnResource(jedis);
-          } catch (Throwable thex) {
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * flush
-   */
-  public void flushDB() {
-    if (_pool != null) {
-      Jedis jedis = null;
-      try {
-        jedis = _pool.getResource();
-        jedis.flushDB();
-      } finally {
-        if (jedis != null) {
-          try {
-            _pool.returnResource(jedis);
-          } catch (Throwable thex) {
-          }
-        }
-      }
-    } else {
-      ShardedJedis jedis = null;
-      try {
-        jedis = _shardedPool.getResource();
-        Collection<Jedis> jedisList = jedis.getAllShards();
-        for (Jedis item : jedisList) {
-          item.flushDB();
-        }
       } finally {
         if (jedis != null) {
           try {
@@ -441,6 +481,7 @@ public class RedisManager {
    * @param regex
    * @return
    */
+/*  
   public Set<byte[]> keys(String pattern) {
     if (_pool != null) {
       Jedis jedis = null;
@@ -476,7 +517,8 @@ public class RedisManager {
       }
     }
   }
-
+*/
+  
   public java.util.Map<String, String> hgetAll(String key) {
     if (_pool != null) {
       Jedis jedis = null;
@@ -719,6 +761,36 @@ public class RedisManager {
     }
   }
 
+  public Long scard(String key) {
+    if (_pool != null) {
+      Jedis jedis = null;
+      try {
+        jedis = _pool.getResource();
+        return jedis.scard(key);
+      } finally {
+        if (jedis != null) {
+          try {
+            _pool.returnResource(jedis);
+          } catch (Throwable thex) {
+          }
+        }
+      }
+    } else {
+      ShardedJedis jedis = null;
+      try {
+        jedis = _shardedPool.getResource();
+        return jedis.scard(key);
+      } finally {
+        if (jedis != null) {
+          try {
+            _shardedPool.returnResource(jedis);
+          } catch (Throwable thex) {
+          }
+        }
+      }
+    }
+  }
+
   public java.util.Set<String> smembers(String key) {
     if (_pool != null) {
       Jedis jedis = null;
@@ -754,7 +826,7 @@ public class RedisManager {
    * 
    * @param key
    */
-  public void del(String key) {
+  public void delStr(String key) {
     if (_pool != null) {
       Jedis jedis = null;
       try {

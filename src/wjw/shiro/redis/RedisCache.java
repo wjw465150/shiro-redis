@@ -20,40 +20,24 @@ public class RedisCache<K, V> implements Cache<K, V> {
   /**
    * The wrapped Jedis instance.
    */
-  private RedisManager cache;
+  private RedisManager redisManager;
 
   /**
    * The Redis key prefix for the cache
    */
   private String keyPrefix = "shiro_cache:";
 
-  /**
-   * Returns the Redis session keys prefix.
-   * 
-   * @return The prefix
-   */
-  public String getKeyPrefix() {
-    return keyPrefix;
-  }
-
-  /**
-   * Sets the Redis sessions key prefix.
-   * 
-   * @param keyPrefix
-   *          The prefix
-   */
-  public void setKeyPrefix(String keyPrefix) {
-    this.keyPrefix = keyPrefix;
-  }
+  //所有cache的key(目的是为了快速遍历!), 存放在set里,key的模式是:"shiro_realm:all_caches" <br/>
+  private String all_caches_Key = "shiro_cache:all_caches";
 
   /**
    * 通过一个JedisManager实例构造RedisCache
    */
-  public RedisCache(RedisManager cache) {
-    if (cache == null) {
-      throw new IllegalArgumentException("Cache argument cannot be null.");
+  public RedisCache(RedisManager redisManager) {
+    if (redisManager == null) {
+      throw new IllegalArgumentException("redisManager argument cannot be null.");
     }
-    this.cache = cache;
+    this.redisManager = redisManager;
   }
 
   /**
@@ -61,7 +45,7 @@ public class RedisCache<K, V> implements Cache<K, V> {
    * custom key prefix.
    * 
    * @param cache
-   *          The cache manager instance
+   *          The redisManager instance
    * @param prefix
    *          The Redis key prefix
    */
@@ -79,7 +63,7 @@ public class RedisCache<K, V> implements Cache<K, V> {
       if (key == null) {
         return null;
       } else {
-        byte[] rawValue = cache.get(getByteKey(key));
+        byte[] rawValue = redisManager.get(getByteKey(key));
         @SuppressWarnings("unchecked")
         V value = (V) SerializeUtils.deserialize(rawValue);
         return value;
@@ -94,7 +78,10 @@ public class RedisCache<K, V> implements Cache<K, V> {
   public V put(K key, V value) throws CacheException {
     logger.debug("put(K key, V value) to redis:key [" + key + "]");
     try {
-      cache.set(getByteKey(key), SerializeUtils.serialize(value));
+      this.redisManager.set(getByteKey(key), SerializeUtils.serialize(value));
+
+      this.redisManager.sadd(all_caches_Key, key.toString());
+
       return value;
     } catch (Throwable t) {
       throw new CacheException(t);
@@ -105,8 +92,12 @@ public class RedisCache<K, V> implements Cache<K, V> {
   public V remove(K key) throws CacheException {
     logger.debug("remove(K key) from redis: key [" + key + "]");
     try {
-      V previous = get(key);
-      cache.del(getByteKey(key));
+      V previous = this.get(key);
+
+      this.redisManager.del(getByteKey(key));
+
+      this.redisManager.srem(all_caches_Key, key.toString());
+
       return previous;
     } catch (Throwable t) {
       throw new CacheException(t);
@@ -115,9 +106,14 @@ public class RedisCache<K, V> implements Cache<K, V> {
 
   @Override
   public void clear() throws CacheException {
-    logger.debug("clear() from redis");
+    logger.debug("Cache clear() from redis");
     try {
-      cache.flushDB();
+      java.util.Set<String> cacheKeys = this.redisManager.smembers(all_caches_Key);
+      for (String key : cacheKeys) {
+        this.redisManager.del((this.keyPrefix + key).getBytes());
+      }
+
+      this.redisManager.delStr(all_caches_Key);
     } catch (Throwable t) {
       throw new CacheException(t);
     }
@@ -126,7 +122,7 @@ public class RedisCache<K, V> implements Cache<K, V> {
   @Override
   public int size() {
     try {
-      return (int) cache.dbSize();
+      return redisManager.scard(all_caches_Key).intValue();
     } catch (Throwable t) {
       throw new CacheException(t);
     }
@@ -136,12 +132,13 @@ public class RedisCache<K, V> implements Cache<K, V> {
   @Override
   public Set<K> keys() {
     try {
-      Set<byte[]> keys = cache.keys(this.keyPrefix + "*");
+      java.util.Set<String> keys = this.redisManager.smembers(all_caches_Key);
+
       if (CollectionUtils.isEmpty(keys)) {
         return Collections.emptySet();
       } else {
         Set<K> newKeys = new HashSet<K>();
-        for (byte[] key : keys) {
+        for (String key : keys) {
           newKeys.add((K) key);
         }
         return newKeys;
@@ -154,10 +151,11 @@ public class RedisCache<K, V> implements Cache<K, V> {
   @Override
   public Collection<V> values() {
     try {
-      Set<byte[]> keys = cache.keys(this.keyPrefix + "*");
+      java.util.Set<String> keys = this.redisManager.smembers(all_caches_Key);
+
       if (!CollectionUtils.isEmpty(keys)) {
         List<V> values = new ArrayList<V>(keys.size());
-        for (byte[] key : keys) {
+        for (String key : keys) {
           @SuppressWarnings("unchecked")
           V value = get((K) key);
           if (value != null) {
@@ -186,6 +184,25 @@ public class RedisCache<K, V> implements Cache<K, V> {
     } else {
       return SerializeUtils.serialize(key);
     }
+  }
+
+  /**
+   * Returns the Redis cache keys prefix.
+   * 
+   * @return The prefix
+   */
+  public String getKeyPrefix() {
+    return keyPrefix;
+  }
+
+  /**
+   * Sets the Redis cache key prefix.
+   * 
+   * @param keyPrefix
+   *          The prefix
+   */
+  public void setKeyPrefix(String keyPrefix) {
+    this.keyPrefix = keyPrefix;
   }
 
 }

@@ -32,7 +32,7 @@ public class TestRedisRealmManager extends TestCase {
   @Before
   public void setUp() throws Exception {
     RedisManager redis = new RedisManager();
-    redis.setServerlist("192.168.2.113:6379");
+    redis.setServerlist("127.0.0.1:6379");
     redis.setMinConn(5);
     redis.setMaxConn(10);
     redis.init();
@@ -101,6 +101,8 @@ public class TestRedisRealmManager extends TestCase {
 
     log.info("isPermitted:" + subject.isPermitted("*"));
 
+    log.info("session:" + subject.getSession().getTimeout());
+    log.info("session:" + subject.getSession().getLastAccessTime());
     subject.logout();
   }
 

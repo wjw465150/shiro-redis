@@ -13,13 +13,16 @@ import org.slf4j.LoggerFactory;
 
 public class RedisSessionDAO extends CachingSessionDAO {
   private static Logger logger = LoggerFactory.getLogger(RedisSessionDAO.class);
-  
+
   private RedisManager redisManager;
 
   /**
    * The Redis key prefix for the sessions
    */
   private String keyPrefix = "shiro_session:";
+
+  //所有session的key(目的是为了快速遍历!), 存放在set里,key的模式是:"shiro_realm:all_sessions" <br/>
+  private String all_sessions_Key = "shiro_session:all_sessions";
 
   @Override
   protected void doDelete(Session session) {
@@ -28,6 +31,8 @@ public class RedisSessionDAO extends CachingSessionDAO {
       return;
     }
     redisManager.del(this.getByteKey(session.getId()));
+
+    redisManager.srem(all_sessions_Key, session.getId().toString());
   }
 
   @Override
@@ -39,10 +44,10 @@ public class RedisSessionDAO extends CachingSessionDAO {
   public Collection<Session> getActiveSessions() {
     Set<Session> sessions = new HashSet<Session>();
 
-    Set<byte[]> keys = redisManager.keys(this.keyPrefix + "*");
+    Set<String> keys = redisManager.smembers(all_sessions_Key);
     if (keys != null && keys.size() > 0) {
-      for (byte[] key : keys) {
-        Session s = (Session) SerializeUtils.deserialize(redisManager.get(key));
+      for (String key : keys) {
+        Session s = (Session) SerializeUtils.deserialize(redisManager.get((this.keyPrefix + key).getBytes()));
         sessions.add(s);
       }
     }
@@ -54,7 +59,9 @@ public class RedisSessionDAO extends CachingSessionDAO {
   protected Serializable doCreate(Session session) {
     Serializable sessionId = this.generateSessionId(session);
     this.assignSessionId(session, sessionId);
+
     this.saveSession(session);
+
     return sessionId;
   }
 
@@ -85,6 +92,8 @@ public class RedisSessionDAO extends CachingSessionDAO {
     byte[] value = SerializeUtils.serialize(session);
     session.setTimeout(redisManager.getExpire() * 1000);
     this.redisManager.set(key, value, redisManager.getExpire());
+
+    this.redisManager.sadd(all_sessions_Key, session.getId().toString());
   }
 
   /**
