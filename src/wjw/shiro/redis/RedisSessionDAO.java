@@ -19,10 +19,10 @@ public class RedisSessionDAO extends CachingSessionDAO {
   /**
    * The Redis key prefix for the sessions
    */
-  private String keyPrefix = "shiro_session:";
+  private String keyPrefix = "shiro:session:";
 
-  //所有session的key(目的是为了快速遍历!), 存放在set里,key的模式是:"shiro_realm:all_sessions" <br/>
-  private String all_sessions_Key = "shiro_session:all_sessions";
+  //所有session的key(目的是为了快速遍历!), 存放在set里,key的模式是:keyPrefix+"all_sessions" <br/>
+  private String all_sessions_Key = keyPrefix + "all_sessions";
 
   @Override
   protected void doDelete(Session session) {
@@ -135,6 +135,7 @@ public class RedisSessionDAO extends CachingSessionDAO {
    */
   public void setKeyPrefix(String keyPrefix) {
     this.keyPrefix = keyPrefix;
+    this.all_sessions_Key = this.keyPrefix + "all_sessions";
   }
 
 }

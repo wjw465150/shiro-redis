@@ -25,7 +25,7 @@ public class RedisCacheManager implements CacheManager, Initializable, Destroyab
   /**
    * The Redis key prefix for caches
    */
-  private String keyPrefix = "shiro_cache:";
+  private String keyPrefix = "shiro:cache:";
 
   /**
    * Returns the Redis cache keys prefix.

@@ -6,7 +6,7 @@
 	<classpathentry kind="lib" path="lib/com.springsource.org.apache.commons.pool-1.5.3.jar"/>
 	<classpathentry kind="lib" path="lib/shiro/commons-beanutils-1.8.3.jar"/>
 	<classpathentry kind="lib" path="lib/shiro/log4j-1.2.16.jar"/>
-	<classpathentry kind="lib" path="lib/shiro/shiro-all-1.2.3.jar" sourcepath="e:/WJW_DATA/OpenSource/权限框架_Shiro/src_all/"/>
+	<classpathentry kind="lib" path="E:/WJW_DATA/OpenSource/权限框架_Shiro/原始文档/shiro-all-1.2.4.jar" sourcepath="e:/WJW_DATA/OpenSource/权限框架_Shiro/src_all/"/>
 	<classpathentry kind="lib" path="lib/shiro/slf4j-api-1.6.4.jar"/>
 	<classpathentry kind="lib" path="lib/shiro/slf4j-log4j12-1.6.4.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>

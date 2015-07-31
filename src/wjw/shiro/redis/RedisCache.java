@@ -25,10 +25,10 @@ public class RedisCache<K, V> implements Cache<K, V> {
   /**
    * The Redis key prefix for the cache
    */
-  private String keyPrefix = "shiro_cache:";
+  private String keyPrefix = "shiro:cache:";
 
-  //所有cache的key(目的是为了快速遍历!), 存放在set里,key的模式是:"shiro_realm:all_caches" <br/>
-  private String all_caches_Key = "shiro_cache:all_caches";
+  //所有cache的key(目的是为了快速遍历!), 存放在set里,key的模式是:keyPrefix+"all_caches" <br/>
+  private String all_caches_Key = keyPrefix + "all_caches";
 
   /**
    * 通过一个JedisManager实例构造RedisCache
@@ -54,6 +54,7 @@ public class RedisCache<K, V> implements Cache<K, V> {
 
     // set the prefix
     this.keyPrefix = prefix;
+    this.all_caches_Key = this.keyPrefix + "all_caches";
   }
 
   @Override
@@ -203,6 +204,7 @@ public class RedisCache<K, V> implements Cache<K, V> {
    */
   public void setKeyPrefix(String keyPrefix) {
     this.keyPrefix = keyPrefix;
+    this.all_caches_Key = this.keyPrefix + "all_caches";
   }
 
 }

@@ -25,10 +25,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 用户: 存放在hash里,key的模式是:"shiro_realm:users:$username" <br/>
- * 角色: 存放在set里,key的模式是:"shiro_realm:all_roles" <br/>
- * 用户拥有的角色:存放在set里,key的模式是:"shiro_realm:user_roles:$username" <br/>
- * 角色对应的权限:存放在hash里,key的模式是:"shiro_realm:roles_permissions" <br/>
+ * 用户: 存放在hash里,key的模式是:keyPrefix+"users:$username" <br/>
+ * 角色: 存放在set里,key的模式是:keyPrefix+"all_roles" <br/>
+ * 用户拥有的角色:存放在set里,key的模式是:keyPrefix+"user_roles:$username" <br/>
+ * 角色对应的权限:存放在hash里,key的模式是:keyPrefix+"roles_permissions" <br/>
  * 
  * @author Administrator
  * 
@@ -53,21 +53,21 @@ public class RedisRealm extends AuthorizingRealm {
   /**
    * The Redis key prefix for the Realm
    */
-  private String keyPrefix = "shiro_realm:";
+  private String keyPrefix = "shiro:realm:";
 
   //用户库的key前缀
-  private String users_KeyPrefix = "shiro_realm:users:";
+  private String users_KeyPrefix = keyPrefix + "users:";
 
   //角色库的key
-  private String all_roles_Key = "shiro_realm:all_roles";
+  private String all_roles_Key = keyPrefix + "all_roles";
 
   //用户拥有的角色库的key前缀
-  private String user_roles_KeyPrefix = "shiro_realm:user_roles:";
+  private String user_roles_KeyPrefix = keyPrefix + "user_roles:";
   //角色被那些用户拥有库的key前缀
-  private String role_users_KeyPrefix = "shiro_realm:role_users:";
+  private String role_users_KeyPrefix = keyPrefix + "role_users:";
 
   //角色对应的权限库的key
-  private String roles_permissions_Key = "shiro_realm:roles_permissions";
+  private String roles_permissions_Key = keyPrefix + "roles_permissions";
 
   /**
    * Returns the Redis session keys prefix.
@@ -196,7 +196,7 @@ public class RedisRealm extends AuthorizingRealm {
   }
 
   /**
-   * 添加, 用户: 存放在hash里,key的模式是:"shiro_realm:users:$username" <br/>
+   * 添加, 用户: 存放在hash里,key的模式是:keyPrefix+"users:$username" <br/>
    * 
    * @param username
    * @param plainTextPassword
@@ -252,7 +252,7 @@ public class RedisRealm extends AuthorizingRealm {
   }
 
   /**
-   * 添加, 角色: 存放在set里,key的模式是:"shiro_realm:all_roles" <br/>
+   * 添加, 角色: 存放在set里,key的模式是:keyPrefix+"all_roles" <br/>
    * 
    * @param roles
    * @return
@@ -284,7 +284,7 @@ public class RedisRealm extends AuthorizingRealm {
   }
 
   /**
-   * 添加, 用户拥有的角色:存放在set里,key的模式是:"shiro_realm:user_roles:$username" <br/>
+   * 添加, 用户拥有的角色:存放在set里,key的模式是:keyPrefix+"user_roles:$username" <br/>
    * 
    * @param username
    * @param roles
@@ -323,7 +323,7 @@ public class RedisRealm extends AuthorizingRealm {
   }
 
   /**
-   * 添加, 角色对应的权限:存放在hash里,key的模式是:"shiro_realm:roles_permissions" <br/>
+   * 添加, 角色对应的权限:存放在hash里,key的模式是:keyPrefix+"roles_permissions" <br/>
    * 
    * @param rolesPermissions
    * @return

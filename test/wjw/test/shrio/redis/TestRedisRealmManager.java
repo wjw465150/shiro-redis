@@ -42,20 +42,20 @@ public class TestRedisRealmManager extends TestCase {
     redisRealm.setPermissionsLookupEnabled(true);
 
     //redis.flushDB();
-    //1. 初始化 用户: 存放在hash里,key的模式是:"shiro_realm:users:$username" <br/>
+    //1. 初始化 用户: 存放在hash里,key的模式是:keyPrefix+"users:$username" <br/>
     redisRealm.addUser("admin", "admin123");
     redisRealm.addUser("root", "123456");
     redisRealm.addUser("guest", "guest123");
 
-    //2. 初始化 角色: 存放在set里,key的模式是:"shiro_realm:all_roles"
+    //2. 初始化 角色: 存放在set里,key的模式是:keyPrefix+"all_roles"
     redisRealm.addRole("admin", "guest");
 
-    //3. 用户拥有的角色:存放在set里,key的模式是:"shiro_realm:user_roles:$username" <br/>
+    //3. 用户拥有的角色:存放在set里,key的模式是:keyPrefix+"user_roles:$username" <br/>
     redisRealm.addUserOwnedRoles("admin", "admin");
     redisRealm.addUserOwnedRoles("root", "admin", "guest");
     redisRealm.addUserOwnedRoles("guest", new String[] { "guest" });
 
-    //4.  角色对应的权限:存放在hash里,key的模式是:"shiro_realm:roles_permissions" <br/>
+    //4.  角色对应的权限:存放在hash里,key的模式是:keyPrefix+"roles_permissions" <br/>
     redisRealm.addRolePermission("admin", "*");
     redisRealm.addRolePermission("guest", "*:*:view");
     redis.destroy();
