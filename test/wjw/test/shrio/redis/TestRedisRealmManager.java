@@ -103,6 +103,8 @@ public class TestRedisRealmManager extends TestCase {
 
     log.info("session:" + subject.getSession().getTimeout());
     log.info("session:" + subject.getSession().getLastAccessTime());
+    
+    Thread.sleep(10 * 1000);
     subject.logout();
   }
 

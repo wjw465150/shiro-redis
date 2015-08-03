@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.apache.shiro.cache.Cache;
 import org.apache.shiro.cache.CacheException;
+import org.apache.shiro.crypto.hash.Md5Hash;
 import org.apache.shiro.util.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -183,7 +184,8 @@ public class RedisCache<K, V> implements Cache<K, V> {
       String preKey = this.keyPrefix + key;
       return preKey.getBytes();
     } else {
-      return SerializeUtils.serialize(key);
+      byte[] md5Key = (new Md5Hash(SerializeUtils.serialize(key))).getBytes();
+      return md5Key;
     }
   }
 
