@@ -31,8 +31,9 @@ redisManager.socketTO = 6000
 redisSessionDAO = wjw.shiro.redis.RedisSessionDAO
 redisSessionDAO.redisManager = $redisManager
 
-sessionManager = org.apache.shiro.web.session.mgt.DefaultWebSessionManager
+sessionManager = org.apache.shiro.web.session.mgt.DefaultSessionManager
 sessionManager.sessionDAO = $redisSessionDAO
+sessionManager.sessionValidationInterval = 600000
 
 securityManager.sessionManager = $sessionManager
 
@@ -45,6 +46,7 @@ securityManager.cacheManager = $cacheManager
 #============redisRealm===========
 redisRealm = wjw.shiro.redis.RedisRealm
 redisRealm.redisManager = $redisManager
+redisRealm.cacheManager = $cacheManager
 redisRealm.permissionsLookupEnabled = true
 securityManager.realms=$redisRealm
 ```
@@ -132,6 +134,7 @@ spring-shiro.xml:
   <!-- sessionManager -->
   <bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">
     <property name="sessionDAO" ref="redisSessionDAO" />
+    <property name="sessionValidationInterval" value="600000"/>
   </bean>
   
   <!-- cacheManager -->
@@ -142,6 +145,7 @@ spring-shiro.xml:
   <!-- redisRealm -->
   <bean id="redisRealm" class="wjw.shiro.redis.RedisRealm">
     <property name="redisManager" ref="redisManager" />
+    <property name="cacheManager" ref="cacheManager" />
     <property name="permissionsLookupEnabled" value="true" />
   </bean>
 </beans>

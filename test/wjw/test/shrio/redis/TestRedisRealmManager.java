@@ -1,13 +1,13 @@
 package wjw.test.shrio.redis;
 
-import java.util.HashMap;
-
 import junit.framework.TestCase;
 
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.config.IniSecurityManagerFactory;
+import org.apache.shiro.mgt.DefaultSecurityManager;
 import org.apache.shiro.mgt.SecurityManager;
+import org.apache.shiro.session.mgt.DefaultSessionManager;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.Factory;
 import org.junit.After;
@@ -31,6 +31,46 @@ public class TestRedisRealmManager extends TestCase {
 
   @Before
   public void setUp() throws Exception {
+    log.info("TestRedisRealmManager");
+
+    // create a factory instance
+    Factory<SecurityManager> factory = new IniSecurityManagerFactory("classpath:shiro-realm.ini");
+
+    // get a new security manager instance
+    SecurityManager securityManager = factory.getInstance();
+
+    // set it globally
+    SecurityUtils.setSecurityManager(securityManager);
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    // logout the subject
+    Subject subject = SecurityUtils.getSubject();
+    subject.logout();
+  }
+
+  @Test
+  public void testRedisManager() throws Exception {
+    RedisManager redis = new RedisManager();
+    redis.setServerlist("127.0.0.1:6379");
+    redis.setMinConn(5);
+    redis.setMaxConn(10);
+    redis.init();
+    try {
+      byte[] bb = redis.get("a".getBytes());
+      System.out.println(bb);
+
+      String str = redis.getStr("a");
+      System.out.println(str);
+
+    } finally {
+      redis.destroy();
+    }
+  }
+
+  @Test
+  public void testInitRealm() throws Exception {
     RedisManager redis = new RedisManager();
     redis.setServerlist("127.0.0.1:6379");
     redis.setMinConn(5);
@@ -60,24 +100,6 @@ public class TestRedisRealmManager extends TestCase {
     redisRealm.addRolePermission("guest", "*:*:view");
     redis.destroy();
 
-    log.info("TestRedisRealmManager");
-
-    // create a factory instance
-    Factory<SecurityManager> factory = new IniSecurityManagerFactory("classpath:shiro-realm.ini");
-
-    // get a new security manager instance
-    SecurityManager securityManager = factory.getInstance();
-
-    // set it globally
-    SecurityUtils.setSecurityManager(securityManager);
-
-  }
-
-  @After
-  public void tearDown() throws Exception {
-    // logout the subject
-    Subject subject = SecurityUtils.getSubject();
-    subject.logout();
   }
 
   @Test
@@ -103,13 +125,14 @@ public class TestRedisRealmManager extends TestCase {
 
     log.info("session:" + subject.getSession().getTimeout());
     log.info("session:" + subject.getSession().getLastAccessTime());
-    
+
+    DefaultSessionManager sessionManager = (DefaultSessionManager) ((DefaultSecurityManager) SecurityUtils.getSecurityManager()).getSessionManager();
+    sessionManager.getSessionDAO().getActiveSessions();
     Thread.sleep(10 * 1000);
-    subject.logout();
   }
 
   @Test
-  public void testCRUD() throws Exception {
+  public void testRemove() throws Exception {
     RedisManager redis = new RedisManager();
     redis.setServerlist("127.0.0.1:6379");
     redis.setMinConn(5);
@@ -119,11 +142,10 @@ public class TestRedisRealmManager extends TestCase {
     RedisRealm redisRealm = new RedisRealm();
     redisRealm.setRedisManager(redis);
     redisRealm.setPermissionsLookupEnabled(true);
-    
-    
+
     redisRealm.removeUser("root");
     redisRealm.removeRole("admin");
-    
+
     redis.destroy();
- }
+  }
 }

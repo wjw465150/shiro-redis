@@ -59,6 +59,7 @@ public class RedisCache<K, V> implements Cache<K, V> {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public V get(K key) throws CacheException {
     logger.debug("get(K key) from redis:key [" + key + "]");
     try {
@@ -66,9 +67,13 @@ public class RedisCache<K, V> implements Cache<K, V> {
         return null;
       } else {
         byte[] rawValue = redisManager.get(getByteKey(key));
-        @SuppressWarnings("unchecked")
-        V value = (V) SerializeUtils.deserialize(rawValue);
-        return value;
+        if (rawValue == null) {
+          this.redisManager.srem(all_caches_Key, key.toString());
+          return null;
+        } else {
+          V value = (V) SerializeUtils.deserialize(rawValue);
+          return value;
+        }
       }
     } catch (Throwable t) {
       throw new CacheException(t);
@@ -141,7 +146,11 @@ public class RedisCache<K, V> implements Cache<K, V> {
       } else {
         Set<K> newKeys = new HashSet<K>();
         for (String key : keys) {
-          newKeys.add((K) key);
+          if (redisManager.exists((this.keyPrefix + key).getBytes()) == false) {
+            this.redisManager.srem(all_caches_Key, key);
+          } else {
+            newKeys.add((K) key);
+          }
         }
         return newKeys;
       }

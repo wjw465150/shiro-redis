@@ -42,13 +42,19 @@ public class RedisSessionDAO extends CachingSessionDAO {
 
   @Override
   public Collection<Session> getActiveSessions() {
-    Set<Session> sessions = new HashSet<Session>();
+    super.getActiveSessions(); //调用父类的此方法的目的是:强制清理一下无用的Cache!
 
+    Collection<Session> sessions = new HashSet<Session>();
     Set<String> keys = redisManager.smembers(all_sessions_Key);
     if (keys != null && keys.size() > 0) {
       for (String key : keys) {
-        Session s = (Session) SerializeUtils.deserialize(redisManager.get((this.keyPrefix + key).getBytes()));
-        sessions.add(s);
+        byte[] rawValue = redisManager.get((this.keyPrefix + key).getBytes());
+        if (rawValue == null) {
+          redisManager.srem(all_sessions_Key, key);
+        } else {
+          Session s = (Session) SerializeUtils.deserialize(rawValue);
+          sessions.add(s);
+        }
       }
     }
 

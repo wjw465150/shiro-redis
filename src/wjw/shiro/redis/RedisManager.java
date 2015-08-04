@@ -1,8 +1,6 @@
 package wjw.shiro.redis;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.slf4j.Logger;
@@ -481,44 +479,43 @@ public class RedisManager {
    * @param regex
    * @return
    */
-/*  
-  public Set<byte[]> keys(String pattern) {
-    if (_pool != null) {
-      Jedis jedis = null;
-      try {
-        jedis = _pool.getResource();
-        return jedis.keys(pattern.getBytes());
-      } finally {
-        if (jedis != null) {
-          try {
-            _pool.returnResource(jedis);
-          } catch (Throwable thex) {
-          }
-        }
-      }
-    } else {
-      Set<byte[]> keys = new HashSet<byte[]>();
-      ShardedJedis jedis = null;
-      try {
-        jedis = _shardedPool.getResource();
-        Collection<Jedis> jedisList = jedis.getAllShards();
-        for (Jedis item : jedisList) {
-          keys.addAll(item.keys(pattern.getBytes()));
-        }
+  //  public Set<byte[]> keys(String pattern) {
+  //    if (_pool != null) {
+  //      Jedis jedis = null;
+  //      try {
+  //        jedis = _pool.getResource();
+  //        return jedis.keys(pattern.getBytes());
+  //      } finally {
+  //        if (jedis != null) {
+  //          try {
+  //            _pool.returnResource(jedis);
+  //          } catch (Throwable thex) {
+  //          }
+  //        }
+  //      }
+  //    } else {
+  //      Set<byte[]> keys = new HashSet<byte[]>();
+  //      ShardedJedis jedis = null;
+  //      try {
+  //        jedis = _shardedPool.getResource();
+  //        Collection<Jedis> jedisList =
+  //            jedis.getAllShards();
+  //        for (Jedis item : jedisList) {
+  //          keys.addAll(item.keys(pattern.getBytes()));
+  //        }
+  //
+  //        return keys;
+  //      } finally {
+  //        if (jedis != null) {
+  //          try {
+  //            _shardedPool.returnResource(jedis);
+  //          } catch (Throwable thex) {
+  //          }
+  //        }
+  //      }
+  //    }
+  //  }
 
-        return keys;
-      } finally {
-        if (jedis != null) {
-          try {
-            _shardedPool.returnResource(jedis);
-          } catch (Throwable thex) {
-          }
-        }
-      }
-    }
-  }
-*/
-  
   public java.util.Map<String, String> hgetAll(String key) {
     if (_pool != null) {
       Jedis jedis = null;
@@ -856,4 +853,35 @@ public class RedisManager {
       }
     }
   }
+
+  public boolean exists(byte[] key) {
+    if (_pool != null) {
+      Jedis jedis = null;
+      try {
+        jedis = _pool.getResource();
+        return jedis.exists(key);
+      } finally {
+        if (jedis != null) {
+          try {
+            _pool.returnResource(jedis);
+          } catch (Throwable thex) {
+          }
+        }
+      }
+    } else {
+      ShardedJedis jedis = null;
+      try {
+        jedis = _shardedPool.getResource();
+        return jedis.exists(key);
+      } finally {
+        if (jedis != null) {
+          try {
+            _shardedPool.returnResource(jedis);
+          } catch (Throwable thex) {
+          }
+        }
+      }
+    }
+  }
+
 }
