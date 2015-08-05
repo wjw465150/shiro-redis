@@ -239,7 +239,7 @@ public class RedisManager {
 
   @Override
   public String toString() {
-    return "RedisManager{" + ",rootKey=" + rootKey + ",expire=" + expire + ",serverlist=" + serverlist + ",minConn=" + minConn + ",maxConn=" + maxConn + ",socketTO=" + socketTO + '}';
+    return "RedisManager{" + "rootKey=" + rootKey + ",expire=" + expire + ",serverlist=" + serverlist + ",minConn=" + minConn + ",maxConn=" + maxConn + ",socketTO=" + socketTO + '}';
   }
 
   /**

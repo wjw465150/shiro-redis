@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.shiro.cache.Cache;
@@ -56,16 +55,6 @@ public class RedisCache<K, V> implements Cache<K, V> {
       } else {
         byte[] rawValue = redisManager.get(getByteKey(key));
         if (rawValue == null) {
-          {
-            String preKey;
-            if (key instanceof String) {
-              preKey = (String) key;
-            } else {
-              preKey = key.getClass().getName() + ":" + (new Md5Hash(SerializeUtils.serialize(key))).toHex();
-            }
-            this.redisManager.srem(all_caches_Key, preKey);
-          }
-
           return null;
         } else {
           V value = (V) SerializeUtils.deserialize(rawValue);
@@ -156,40 +145,42 @@ public class RedisCache<K, V> implements Cache<K, V> {
 
       if (CollectionUtils.isEmpty(keys)) {
         return Collections.emptySet();
-      } else {
-        Set<K> newKeys = new HashSet<K>();
-        for (String key : keys) {
-          if (redisManager.exists((this.keyPrefix + key).getBytes()) == false) {
-            this.redisManager.srem(all_caches_Key, key);
-          } else {
-            newKeys.add((K) key);
-          }
-        }
-        return newKeys;
       }
+
+      Set<K> newKeys = new HashSet<K>();
+      for (String key : keys) {
+        if (redisManager.exists((this.keyPrefix + key).getBytes()) == false) {
+          this.redisManager.srem(all_caches_Key, key);
+        } else {
+          newKeys.add((K) key);
+        }
+      }
+      return newKeys;
     } catch (Throwable t) {
       throw new CacheException(t);
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public Collection<V> values() {
     try {
       java.util.Set<String> keys = this.redisManager.smembers(all_caches_Key);
 
-      if (!CollectionUtils.isEmpty(keys)) {
-        List<V> values = new ArrayList<V>(keys.size());
-        for (String key : keys) {
-          @SuppressWarnings("unchecked")
-          V value = get((K) key);
-          if (value != null) {
-            values.add(value);
-          }
-        }
-        return Collections.unmodifiableList(values);
-      } else {
+      if (CollectionUtils.isEmpty(keys)) {
         return Collections.emptyList();
       }
+
+      Collection<V> values = new ArrayList<V>(keys.size());
+      for (String key : keys) {
+        V value = this.get((K) key);
+        if (value == null) {
+          this.redisManager.srem(all_caches_Key, key);
+        } else {
+          values.add(value);
+        }
+      }
+      return values;
     } catch (Throwable t) {
       throw new CacheException(t);
     }
