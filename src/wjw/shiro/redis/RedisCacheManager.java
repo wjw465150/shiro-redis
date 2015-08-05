@@ -22,30 +22,6 @@ public class RedisCacheManager implements CacheManager, Initializable, Destroyab
 
   private RedisManager redisManager;
 
-  /**
-   * The Redis key prefix for caches
-   */
-  private String keyPrefix = "shiro:cache:";
-
-  /**
-   * Returns the Redis cache keys prefix.
-   * 
-   * @return The prefix
-   */
-  public String getKeyPrefix() {
-    return keyPrefix;
-  }
-
-  /**
-   * Sets the Redis cache key prefix.
-   * 
-   * @param keyPrefix
-   *          The prefix
-   */
-  public void setKeyPrefix(String keyPrefix) {
-    this.keyPrefix = keyPrefix;
-  }
-
   @Override
   public void init() throws ShiroException {
     /** Nothing to do here */
@@ -71,7 +47,7 @@ public class RedisCacheManager implements CacheManager, Initializable, Destroyab
       logger.debug("getCache() RedisCache, name:" + name + ",does not yet exist.  Creating now.", name);
 
       // create a new cache instance
-      c = new RedisCache<K, V>(redisManager, keyPrefix);
+      c = new RedisCache<K, V>(redisManager);
 
       // add it to the cache collection
       caches.put(name, c);
@@ -85,7 +61,7 @@ public class RedisCacheManager implements CacheManager, Initializable, Destroyab
 
   public void setRedisManager(RedisManager redisManager) {
     this.redisManager = redisManager;
-    
+
     // initialize the Redis manager instance
     redisManager.init();
   }

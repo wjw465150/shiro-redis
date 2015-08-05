@@ -19,7 +19,7 @@ public class RedisSessionDAO extends CachingSessionDAO {
   /**
    * The Redis key prefix for the sessions
    */
-  private String keyPrefix = "shiro:session:";
+  private String keyPrefix = RedisManager.DEFAULT_ROOTKEY + "session:";
 
   //所有session的key(目的是为了快速遍历!), 存放在set里,key的模式是:keyPrefix+"all_sessions" <br/>
   private String all_sessions_Key = keyPrefix + "all_sessions";
@@ -118,29 +118,15 @@ public class RedisSessionDAO extends CachingSessionDAO {
   }
 
   public void setRedisManager(RedisManager redisManager) {
+    if (redisManager == null) {
+      throw new IllegalArgumentException("redisManager argument cannot be null.");
+    }
     this.redisManager = redisManager;
 
     // initialize the Redis manager instance
     this.redisManager.init();
-  }
 
-  /**
-   * Returns the Redis session keys prefix.
-   * 
-   * @return The prefix
-   */
-  public String getKeyPrefix() {
-    return keyPrefix;
-  }
-
-  /**
-   * Sets the Redis sessions key prefix.
-   * 
-   * @param keyPrefix
-   *          The prefix
-   */
-  public void setKeyPrefix(String keyPrefix) {
-    this.keyPrefix = keyPrefix;
+    this.keyPrefix = this.redisManager.rootKey + "session:";
     this.all_sessions_Key = this.keyPrefix + "all_sessions";
   }
 

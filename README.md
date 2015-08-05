@@ -15,6 +15,9 @@ redisManager.serverlist = ${ip1}:${port1},${ip2}:${port2}
 #or password for redis server
 redisManager.serverlist = ${ip1}:${port1}:${password1},${ip2}:${port2}:${password2}
 
+#optional, default value:shiro
+redisManager.rootKey = shiro:
+
 #optional, default value:5 .redis min connection
 redisManager.minConn = 5
 
@@ -120,6 +123,7 @@ spring-shiro.xml:
   <!-- shiro redisManager -->
   <bean id="redisManager" class="wjw.shiro.redis.RedisManager">
     <property name="serverlist" value="${ip1}:${port1},${ip2}:${port2}"/>
+    <property name="rootKey" value="shiro:"/>
     <property name="minConn" value="5"/>
     <property name="maxConn" value="100"/>
     <property name="expire" value="1800"/>

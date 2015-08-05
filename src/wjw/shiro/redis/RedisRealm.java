@@ -53,7 +53,7 @@ public class RedisRealm extends AuthorizingRealm {
   /**
    * The Redis key prefix for the Realm
    */
-  private String keyPrefix = "shiro:realm:";
+  private String keyPrefix = RedisManager.DEFAULT_ROOTKEY + "realm:";
 
   //用户库的key前缀
   private String users_KeyPrefix = keyPrefix + "users:";
@@ -69,23 +69,21 @@ public class RedisRealm extends AuthorizingRealm {
   //角色对应的权限库的key
   private String roles_permissions_Key = keyPrefix + "roles_permissions";
 
-  /**
-   * Returns the Redis session keys prefix.
-   * 
-   * @return The prefix
-   */
-  public String getKeyPrefix() {
-    return keyPrefix;
+  public RedisManager getRedisManager() {
+    return redisManager;
   }
 
-  /**
-   * Sets the Redis sessions key prefix.
-   * 
-   * @param keyPrefix
-   *          The prefix
-   */
-  public void setKeyPrefix(String keyPrefix) {
-    this.keyPrefix = keyPrefix;
+  public void setRedisManager(RedisManager redisManager) {
+    if (redisManager == null) {
+      throw new IllegalArgumentException("redisManager argument cannot be null.");
+    }
+    this.redisManager = redisManager;
+
+    // initialize the Redis manager instance
+    this.redisManager.init();
+
+    //->set key prefix
+    this.keyPrefix = this.redisManager.rootKey + "realm:";
 
     //用户库的key前缀
     users_KeyPrefix = this.keyPrefix + "users:";
@@ -100,17 +98,7 @@ public class RedisRealm extends AuthorizingRealm {
 
     //角色对应的权限库的key
     roles_permissions_Key = this.keyPrefix + "roles_permissions";
-  }
-
-  public RedisManager getRedisManager() {
-    return redisManager;
-  }
-
-  public void setRedisManager(RedisManager redisManager) {
-    this.redisManager = redisManager;
-
-    // initialize the Redis manager instance
-    this.redisManager.init();
+    //<-set key prefix
   }
 
   protected boolean permissionsLookupEnabled = false;

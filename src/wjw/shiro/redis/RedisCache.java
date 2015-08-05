@@ -26,7 +26,7 @@ public class RedisCache<K, V> implements Cache<K, V> {
   /**
    * The Redis key prefix for the cache
    */
-  private String keyPrefix = "shiro:cache:";
+  private String keyPrefix = RedisManager.DEFAULT_ROOTKEY + "cache:";
 
   //所有cache的key(目的是为了快速遍历!), 存放在set里,key的模式是:keyPrefix+"all_caches" <br/>
   private String all_caches_Key = keyPrefix + "all_caches";
@@ -38,23 +38,11 @@ public class RedisCache<K, V> implements Cache<K, V> {
     if (redisManager == null) {
       throw new IllegalArgumentException("redisManager argument cannot be null.");
     }
+
+    // initialize the Redis manager instance
     this.redisManager = redisManager;
-  }
 
-  /**
-   * Constructs a cache instance with the specified Redis manager and using a
-   * custom key prefix.
-   * 
-   * @param cache
-   *          The redisManager instance
-   * @param prefix
-   *          The Redis key prefix
-   */
-  public RedisCache(RedisManager cache, String prefix) {
-    this(cache);
-
-    // set the prefix
-    this.keyPrefix = prefix;
+    this.keyPrefix = this.redisManager.rootKey + "cache:";
     this.all_caches_Key = this.keyPrefix + "all_caches";
   }
 
@@ -196,26 +184,6 @@ public class RedisCache<K, V> implements Cache<K, V> {
       byte[] md5Key = (new Md5Hash(SerializeUtils.serialize(key))).getBytes();
       return md5Key;
     }
-  }
-
-  /**
-   * Returns the Redis cache keys prefix.
-   * 
-   * @return The prefix
-   */
-  public String getKeyPrefix() {
-    return keyPrefix;
-  }
-
-  /**
-   * Sets the Redis cache key prefix.
-   * 
-   * @param keyPrefix
-   *          The prefix
-   */
-  public void setKeyPrefix(String keyPrefix) {
-    this.keyPrefix = keyPrefix;
-    this.all_caches_Key = this.keyPrefix + "all_caches";
   }
 
 }

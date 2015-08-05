@@ -127,6 +127,18 @@ public class RedisManager {
     this.expire = expire;
   }
 
+  public static final String DEFAULT_ROOTKEY = "shiro:";
+  //存放shiro数据的根key
+  String rootKey = DEFAULT_ROOTKEY;
+
+  public String getRootKey() {
+    return rootKey;
+  }
+
+  public void setRootKey(String rootKey) {
+    this.rootKey = rootKey;
+  }
+
   //<----------------属性----------------------
 
   public RedisManager() {
