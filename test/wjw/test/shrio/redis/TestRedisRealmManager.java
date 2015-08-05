@@ -54,6 +54,7 @@ public class TestRedisRealmManager extends TestCase {
   public void testRedisManager() throws Exception {
     RedisManager redis = new RedisManager();
     redis.setServerlist("127.0.0.1:6379");
+    redis.setRootKey("test_shiro:");
     redis.setMinConn(5);
     redis.setMaxConn(10);
     redis.init();
@@ -73,6 +74,7 @@ public class TestRedisRealmManager extends TestCase {
   public void testInitRealm() throws Exception {
     RedisManager redis = new RedisManager();
     redis.setServerlist("127.0.0.1:6379");
+    redis.setRootKey("test_shiro:");
     redis.setMinConn(5);
     redis.setMaxConn(10);
     redis.init();
@@ -128,13 +130,14 @@ public class TestRedisRealmManager extends TestCase {
 
     DefaultSessionManager sessionManager = (DefaultSessionManager) ((DefaultSecurityManager) SecurityUtils.getSecurityManager()).getSessionManager();
     sessionManager.getSessionDAO().getActiveSessions();
-    Thread.sleep(10 * 1000);
+    Thread.sleep(30 * 1000);
   }
 
   @Test
   public void testRemove() throws Exception {
     RedisManager redis = new RedisManager();
     redis.setServerlist("127.0.0.1:6379");
+    redis.setRootKey("test_shiro:");
     redis.setMinConn(5);
     redis.setMaxConn(10);
     redis.init();

@@ -128,7 +128,7 @@ public class RedisManager {
   }
 
   public static final String DEFAULT_ROOTKEY = "shiro:";
-  //存放shiro数据的根key
+  //存放shiro数据的根key,必须以":"结尾!
   String rootKey = DEFAULT_ROOTKEY;
 
   public String getRootKey() {
@@ -136,6 +136,9 @@ public class RedisManager {
   }
 
   public void setRootKey(String rootKey) {
+    if (rootKey.endsWith(":") == false) {
+      throw new IllegalArgumentException("rootKey must end with ':'!");
+    }
     this.rootKey = rootKey;
   }
 
@@ -236,7 +239,7 @@ public class RedisManager {
 
   @Override
   public String toString() {
-    return "RedisManager{" + ",expire=" + expire + ",serverlist=" + serverlist + ",minConn=" + minConn + ",maxConn=" + maxConn + ",socketTO=" + socketTO + '}';
+    return "RedisManager{" + ",rootKey=" + rootKey + ",expire=" + expire + ",serverlist=" + serverlist + ",minConn=" + minConn + ",maxConn=" + maxConn + ",socketTO=" + socketTO + '}';
   }
 
   /**

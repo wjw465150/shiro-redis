@@ -56,7 +56,16 @@ public class RedisCache<K, V> implements Cache<K, V> {
       } else {
         byte[] rawValue = redisManager.get(getByteKey(key));
         if (rawValue == null) {
-          this.redisManager.srem(all_caches_Key, key.toString());
+          {
+            String preKey;
+            if (key instanceof String) {
+              preKey = (String) key;
+            } else {
+              preKey = key.getClass().getName() + ":" + (new Md5Hash(SerializeUtils.serialize(key))).toHex();
+            }
+            this.redisManager.srem(all_caches_Key, preKey);
+          }
+
           return null;
         } else {
           V value = (V) SerializeUtils.deserialize(rawValue);
@@ -75,7 +84,15 @@ public class RedisCache<K, V> implements Cache<K, V> {
     try {
       this.redisManager.set(getByteKey(key), SerializeUtils.serialize(value));
 
-      this.redisManager.sadd(all_caches_Key, key.toString());
+      {
+        String preKey;
+        if (key instanceof String) {
+          preKey = (String) key;
+        } else {
+          preKey = key.getClass().getName() + ":" + (new Md5Hash(SerializeUtils.serialize(key))).toHex();
+        }
+        this.redisManager.sadd(all_caches_Key, preKey);
+      }
 
       return value;
     } catch (Throwable t) {
@@ -91,7 +108,15 @@ public class RedisCache<K, V> implements Cache<K, V> {
 
       this.redisManager.del(getByteKey(key));
 
-      this.redisManager.srem(all_caches_Key, key.toString());
+      {
+        String preKey;
+        if (key instanceof String) {
+          preKey = (String) key;
+        } else {
+          preKey = key.getClass().getName() + ":" + (new Md5Hash(SerializeUtils.serialize(key))).toHex();
+        }
+        this.redisManager.srem(all_caches_Key, preKey);
+      }
 
       return previous;
     } catch (Throwable t) {
@@ -178,11 +203,9 @@ public class RedisCache<K, V> implements Cache<K, V> {
    */
   private byte[] getByteKey(K key) {
     if (key instanceof String) {
-      String preKey = this.keyPrefix + key;
-      return preKey.getBytes();
+      return (this.keyPrefix + key).getBytes();
     } else {
-      byte[] md5Key = (new Md5Hash(SerializeUtils.serialize(key))).getBytes();
-      return md5Key;
+      return (this.keyPrefix + key.getClass().getName() + ":" + (new Md5Hash(SerializeUtils.serialize(key))).toHex()).getBytes();
     }
   }
 

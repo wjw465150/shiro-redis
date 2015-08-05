@@ -109,8 +109,7 @@ public class RedisSessionDAO extends CachingSessionDAO {
    * @return
    */
   private byte[] getByteKey(Serializable sessionId) {
-    String preKey = this.keyPrefix + sessionId;
-    return preKey.getBytes();
+    return (this.keyPrefix + sessionId).getBytes();
   }
 
   public RedisManager getRedisManager() {
