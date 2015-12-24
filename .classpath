@@ -11,5 +11,6 @@
 	<classpathentry kind="lib" path="lib/shiro/slf4j-log4j12-1.6.4.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="lib/shiro/commons-logging-1.1.3.jar"/>
+	<classpathentry kind="lib" path="lib/kryo-all-3.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

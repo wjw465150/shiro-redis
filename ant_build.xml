@@ -18,9 +18,13 @@
   		  <include name="redis/**" />
   		</fileset>
     	<zipfileset src="lib/com.springsource.org.apache.commons.pool-1.5.3.jar"/>
+    	<zipfileset src="lib/kryo-all-3.jar"/>
 
   		<rule pattern="org.apache.commons.pool.**" result="internal.org.apache.commons.pool.@1"/>
   		<rule pattern="redis.**" result="internal.redis.@1"/>
+  		<rule pattern="com.esotericsoftware.**" result="internal.com.esotericsoftware.@1"/>
+  		<rule pattern="de.**" result="internal.de.@1"/>
+  		<rule pattern="org.wjw.kryo.**" result="internal.org.wjw.kryo.@1"/>
     </jarjar>
 
   	<delete dir="${basedir}/tmp" quiet="true"/>
